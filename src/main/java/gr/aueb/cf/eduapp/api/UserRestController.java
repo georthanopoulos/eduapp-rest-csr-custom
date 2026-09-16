@@ -4,10 +4,7 @@ import gr.aueb.cf.eduapp.core.exceptions.EntityAlreadyExistsException;
 import gr.aueb.cf.eduapp.core.exceptions.EntityInvalidArgumentException;
 import gr.aueb.cf.eduapp.core.exceptions.EntityNotFoundException;
 import gr.aueb.cf.eduapp.core.exceptions.ValidationException;
-import gr.aueb.cf.eduapp.dto.ErrorResponseDTO;
-import gr.aueb.cf.eduapp.dto.UserInsertDTO;
-import gr.aueb.cf.eduapp.dto.UserReadOnlyDTO;
-import gr.aueb.cf.eduapp.dto.ValidationErrorResponseDTO;
+import gr.aueb.cf.eduapp.dto.*;
 import gr.aueb.cf.eduapp.service.IUserService;
 import gr.aueb.cf.eduapp.validator.UserInsertValidator;
 import io.swagger.v3.oas.annotations.Operation;
@@ -124,6 +121,56 @@ public class UserRestController {
             throws EntityNotFoundException {
 
         return ResponseEntity.ok(userService.getUserByUUIDDeletedFalse(uuid));
+    }
+
+    @Operation(
+            summary = "Change password",
+            description = "Allows a user to change their own password by providing the current password for verification."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Password changed successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Old password is incorrect or new password is invalid",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Cannot change another user's password",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            )
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PutMapping("/{uuid}/password")
+    public ResponseEntity<Void> changePassword(@PathVariable UUID uuid,
+                                               @Valid @RequestBody PasswordUpdateDTO passwordUpdateDTO,
+                                               BindingResult bindingResult)
+            throws ValidationException, EntityNotFoundException, EntityInvalidArgumentException {
+
+        if (bindingResult.hasErrors()) {
+            throw new ValidationException("Password", "Invalid password data", bindingResult);
+        }
+
+        userService.changePassword(uuid, passwordUpdateDTO);
+
+        return ResponseEntity.noContent().build();
     }
 
 }
