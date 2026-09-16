@@ -18,4 +18,6 @@ public interface UserRepository extends JpaRepository<User, Long>,
 
     Optional<User> findByUuidAndDeletedFalse(UUID uuid);
     Optional<User> findByUsernameAndDeletedFalse(String username);
+
+    boolean existsByRole_Name(String roleName);     // addition that will be used in AdminBootstrapConfig.
 }

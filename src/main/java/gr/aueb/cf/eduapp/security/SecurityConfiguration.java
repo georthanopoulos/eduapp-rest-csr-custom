@@ -48,7 +48,7 @@ public class SecurityConfiguration {
                         httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users").hasAuthority("MANAGE_USERS")
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/teachers").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/teachers/{uuid}/*").permitAll()
