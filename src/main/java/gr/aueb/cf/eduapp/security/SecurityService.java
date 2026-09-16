@@ -19,4 +19,9 @@ public class SecurityService {
         // Find the teacher record and check if its user uuid matches the logged-in user
         return teacherRepository.existsByUuidAndUser_Uuid(teacherUuid, principal.getUuid());
     }
+
+    public boolean isOwnUserProfile(UUID userUuid, Authentication authentication) {
+        User principal = (User) authentication.getPrincipal();
+        return principal.getUuid().equals(userUuid);
+    }
 }
