@@ -45,7 +45,7 @@ public class AdminBootstrapConfig {
             User admin = new User();
             admin.setUsername(ADMIN_USERNAME);
             admin.setPassword(passwordEncoder.encode(tempPassword));              // BCrypt
-            adminRole.addUser(admin);
+            admin.setRole(adminRole);
 
             userRepository.save(admin);
 
