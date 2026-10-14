@@ -51,7 +51,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/users").hasAuthority("MANAGE_USERS")
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/teachers").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/teachers/{uuid}/*").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/teachers/{uuid}/amka-file").hasAuthority("UPLOAD_OWN_AMKA_FILE")
                         .requestMatchers("/api/v1/eligible/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*").hasAuthority("VIEW_USER")

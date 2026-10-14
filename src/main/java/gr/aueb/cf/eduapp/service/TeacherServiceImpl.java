@@ -238,6 +238,7 @@ public class TeacherServiceImpl implements ITeacherService {
             maxDelay = 10000
     )
     @Transactional(rollbackFor = EntityNotFoundException.class)
+    @PreAuthorize("hasAuthority('UPLOAD_OWN_AMKA_FILE') and @securityService.isOwnTeacherProfile(#uuid, authentication)")
     public void saveAmkaFile(UUID uuid, MultipartFile amkaFile)
             throws FileUploadException, EntityNotFoundException {
         try {
