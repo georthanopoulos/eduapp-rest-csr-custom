@@ -72,6 +72,14 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponseDTO(e.getCode(), e.getMessage()));
     }
 
+    @ExceptionHandler(InvalidFileException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidFileException(InvalidFileException e) {
+        log.warn("Invalid File Argument. Message={}", e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)             // 400 Bad Request
+                .body(new ErrorResponseDTO(e.getCode(), e.getMessage()));
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponseDTO> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
         log.warn("Data integrity violation. Message={}", e.getMessage());
