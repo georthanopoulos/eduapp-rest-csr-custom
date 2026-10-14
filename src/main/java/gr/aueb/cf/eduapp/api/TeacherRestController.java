@@ -113,7 +113,7 @@ public class TeacherRestController {
     public ResponseEntity<Void> uploadAmkaFile(
             @PathVariable UUID uuid,
             @RequestParam("amkaFile") MultipartFile amkaFile
-            ) throws EntityNotFoundException, FileUploadException {
+            ) throws EntityNotFoundException, FileUploadException, InvalidFileException {
 
         teacherService.saveAmkaFile(uuid, amkaFile);
         return ResponseEntity.noContent().build();

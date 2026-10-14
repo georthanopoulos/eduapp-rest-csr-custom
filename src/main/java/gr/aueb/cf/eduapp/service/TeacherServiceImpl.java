@@ -1,9 +1,6 @@
 package gr.aueb.cf.eduapp.service;
 
-import gr.aueb.cf.eduapp.core.exceptions.EntityAlreadyExistsException;
-import gr.aueb.cf.eduapp.core.exceptions.EntityInvalidArgumentException;
-import gr.aueb.cf.eduapp.core.exceptions.EntityNotFoundException;
-import gr.aueb.cf.eduapp.core.exceptions.FileUploadException;
+import gr.aueb.cf.eduapp.core.exceptions.*;
 import gr.aueb.cf.eduapp.core.filters.TeacherFilters;
 import gr.aueb.cf.eduapp.dto.TeacherInsertDTO;
 import gr.aueb.cf.eduapp.dto.TeacherReadOnlyDTO;
@@ -240,7 +237,7 @@ public class TeacherServiceImpl implements ITeacherService {
     @Transactional(rollbackFor = EntityNotFoundException.class)
     @PreAuthorize("hasAuthority('UPLOAD_OWN_AMKA_FILE') and @securityService.isOwnTeacherProfile(#uuid, authentication)")
     public void saveAmkaFile(UUID uuid, MultipartFile amkaFile)
-            throws FileUploadException, EntityNotFoundException {
+            throws FileUploadException, EntityNotFoundException, InvalidFileException {
         try {
             String originalFilename = amkaFile.getOriginalFilename();
             String savedName = UUID.randomUUID() + getFileExtension(originalFilename);
@@ -278,6 +275,9 @@ public class TeacherServiceImpl implements ITeacherService {
             log.info("Attachment for teacher with amka={} saved", personalInfo.getAmka());
         } catch (EntityNotFoundException e) {
             log.error("Attachment for teacher with amka={} not found", uuid, e);
+            throw e;
+        } catch (InvalidFileException e) {
+            log.error("Error in file form or size detected. File upload for teacher with amka = {} has failed", uuid, e);
             throw e;
         } catch (IOException | HttpServerErrorException e) {
             log.error("Error saving attachment for teacher with amka={}", uuid, e);
