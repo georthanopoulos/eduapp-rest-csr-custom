@@ -1,9 +1,6 @@
 package gr.aueb.cf.eduapp.service;
 
-import gr.aueb.cf.eduapp.core.exceptions.EntityAlreadyExistsException;
-import gr.aueb.cf.eduapp.core.exceptions.EntityInvalidArgumentException;
-import gr.aueb.cf.eduapp.core.exceptions.EntityNotFoundException;
-import gr.aueb.cf.eduapp.core.exceptions.FileUploadException;
+import gr.aueb.cf.eduapp.core.exceptions.*;
 //import gr.aueb.cf.eduapp.core.filters.TeacherFilters;
 //import gr.aueb.cf.eduapp.dto.TeacherUpdateDTO;
 import gr.aueb.cf.eduapp.core.filters.TeacherFilters;
@@ -24,7 +21,7 @@ public interface ITeacherService {
             throws EntityAlreadyExistsException, EntityInvalidArgumentException;
 
     void saveAmkaFile(UUID uuid, MultipartFile amkaFile)
-            throws FileUploadException, EntityNotFoundException;
+            throws FileUploadException, EntityNotFoundException, InvalidFileException;
 
     TeacherReadOnlyDTO updateTeacher(TeacherUpdateDTO teacherUpdateDTO)
             throws EntityNotFoundException, EntityAlreadyExistsException, EntityInvalidArgumentException;

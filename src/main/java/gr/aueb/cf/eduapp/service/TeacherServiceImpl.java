@@ -1,5 +1,6 @@
 package gr.aueb.cf.eduapp.service;
 
+import gr.aueb.cf.eduapp.core.enums.AllowedFileType;
 import gr.aueb.cf.eduapp.core.exceptions.*;
 import gr.aueb.cf.eduapp.core.filters.TeacherFilters;
 import gr.aueb.cf.eduapp.dto.TeacherInsertDTO;
@@ -238,6 +239,11 @@ public class TeacherServiceImpl implements ITeacherService {
     @PreAuthorize("hasAuthority('UPLOAD_OWN_AMKA_FILE') and @securityService.isOwnTeacherProfile(#uuid, authentication)")
     public void saveAmkaFile(UUID uuid, MultipartFile amkaFile)
             throws FileUploadException, EntityNotFoundException, InvalidFileException {
+
+        if (amkaFile.isEmpty()) {
+            throw new InvalidFileException("TeacherAmka", "The uploaded file is empty");
+        }
+
         try {
             String originalFilename = amkaFile.getOriginalFilename();
             String savedName = UUID.randomUUID() + getFileExtension(originalFilename);
@@ -245,17 +251,22 @@ public class TeacherServiceImpl implements ITeacherService {
             String uploadDirectory = uploadDir;
             Path filePath = Paths.get(uploadDirectory + savedName);
 
+            Tika tika = new Tika();                                    // Tika: detects the real file type from its content (first bytes), not from the filename or client-sent Content-Type
+            String contentType = tika.detect(amkaFile.getBytes());
+
+            AllowedFileType allowedFileType = AllowedFileType.getByContentType(contentType)
+                            .orElseThrow(() -> new InvalidFileException("TeacherAmka", "The file type is not supported. " +
+                                    "Please upload a valid amka-file in pdf, png or jpg format"));
+
             Files.createDirectories(filePath.getParent());
     //        Files.write(filePath, amkaFile.getBytes());
-            amkaFile.transferTo(filePath);  // safe for large files, more efficient
+            amkaFile.transferTo(filePath);                    // safe for large files, more efficient
 
             Attachment attachment = new Attachment();
             attachment.setFilename(originalFilename);
             attachment.setSavedName(savedName);
             attachment.setFilePath(filePath.toString());
 
-            Tika tika = new Tika();
-            String contentType = tika.detect(amkaFile.getBytes());
 //            attachment.setContentType(amkaFile.getContentType());
             attachment.setContentType(contentType);
             attachment.setExtension(getFileExtension(originalFilename));
@@ -275,9 +286,6 @@ public class TeacherServiceImpl implements ITeacherService {
             log.info("Attachment for teacher with amka={} saved", personalInfo.getAmka());
         } catch (EntityNotFoundException e) {
             log.error("Attachment for teacher with amka={} not found", uuid, e);
-            throw e;
-        } catch (InvalidFileException e) {
-            log.error("Error in file form or size detected. File upload for teacher with amka = {} has failed", uuid, e);
             throw e;
         } catch (IOException | HttpServerErrorException e) {
             log.error("Error saving attachment for teacher with amka={}", uuid, e);
