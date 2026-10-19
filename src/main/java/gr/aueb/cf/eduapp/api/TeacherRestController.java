@@ -87,6 +87,7 @@ public class TeacherRestController {
             summary = "Upload AMKA attachment file for a teacher",
             description = "Uploads a teacher's AMKA document file. Replaces existing file if present."
     )
+    @SecurityRequirement(name = "Bearer Authentication")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "204",
