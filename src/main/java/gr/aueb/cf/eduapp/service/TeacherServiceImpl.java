@@ -246,10 +246,6 @@ public class TeacherServiceImpl implements ITeacherService {
 
         try {
             String originalFilename = amkaFile.getOriginalFilename();
-            String savedName = UUID.randomUUID() + getFileExtension(originalFilename);
-
-            String uploadDirectory = uploadDir;
-            Path filePath = Paths.get(uploadDirectory + savedName);
 
             Tika tika = new Tika();                                    // Tika: detects the real file type from its content (first bytes), not from the filename or client-sent Content-Type
             String contentType = tika.detect(amkaFile.getBytes());
@@ -258,8 +254,11 @@ public class TeacherServiceImpl implements ITeacherService {
                             .orElseThrow(() -> new InvalidFileException("TeacherAmka", "The file type is not supported. " +
                                     "Please upload a valid amka-file in pdf, png or jpg format"));
 
+            String savedName = UUID.randomUUID() + allowedFileType.getExtension();
+
+            Path filePath = Path.of(uploadDir).resolve(savedName);
+
             Files.createDirectories(filePath.getParent());
-    //        Files.write(filePath, amkaFile.getBytes());
             amkaFile.transferTo(filePath);                    // safe for large files, more efficient
 
             Attachment attachment = new Attachment();
@@ -267,9 +266,8 @@ public class TeacherServiceImpl implements ITeacherService {
             attachment.setSavedName(savedName);
             attachment.setFilePath(filePath.toString());
 
-//            attachment.setContentType(amkaFile.getContentType());
             attachment.setContentType(contentType);
-            attachment.setExtension(getFileExtension(originalFilename));
+            attachment.setExtension(getFileExtension(savedName));
 
             Teacher teacher = teacherRepository.findByUuid(uuid).orElseThrow(()
                     -> new EntityNotFoundException("Teacher", "Teacher with uuid=" + uuid + " not found."));
