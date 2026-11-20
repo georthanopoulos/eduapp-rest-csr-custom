@@ -94,6 +94,30 @@ public class TeacherRestController {
                     description = "File uploaded successfully"
             ),
             @ApiResponse(
+                    responseCode = "400",
+                    description = "Empty or invalid file type detected",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Not Authenticated",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Access Denied",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
                     responseCode = "404",
                     description = "Teacher not found",
                     content = @Content(
