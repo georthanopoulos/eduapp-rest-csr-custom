@@ -118,7 +118,7 @@ public class TeacherRestController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "404",
+                    responseCode = "405",
                     description = "Teacher not found",
                     content = @Content(
                             mediaType = "application/json",
