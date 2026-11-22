@@ -2,6 +2,7 @@ package gr.aueb.cf.eduapp.api;
 
 import gr.aueb.cf.eduapp.dto.JobStatusDTO;
 import gr.aueb.cf.eduapp.service.IEligibleService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,8 +11,9 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/v1/eligible")
+@SecurityRequirement(name = "Bearer Authentication")
+@RequiredArgsConstructor
 public class EligibleRestController {
 
     private final IEligibleService eligibleService;
