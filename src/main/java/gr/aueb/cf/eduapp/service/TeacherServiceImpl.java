@@ -28,7 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -56,18 +55,18 @@ public class TeacherServiceImpl implements ITeacherService {
 
         try {
             if (dto.vat() != null && teacherRepository.findByVat(dto.vat()).isPresent()) {
-                throw new EntityAlreadyExistsException("Teacher", "Teacher with vat=" + dto.vat() + " already exists");
+                throw new EntityAlreadyExistsException("Teacher", "Teacher with this vat already exists");
             }
             if (personalInfoRepository.findByAmka(dto.personalInfoInsertDTO().amka()).isPresent()) {
-                throw new EntityAlreadyExistsException("AMKA", "User with AMKA " + dto.personalInfoInsertDTO().amka() + " already exists");
+                throw new EntityAlreadyExistsException("AMKA", "User with this AMKA already exists");
             }
 
             if (userRepository.findByUsername(dto.userInsertDTO().username()).isPresent()) {
-                throw new EntityAlreadyExistsException("Username", "User with username " + dto.userInsertDTO().username() + " already exists");
+                throw new EntityAlreadyExistsException("Username", "User with this username already exists");
             }
 
             if (personalInfoRepository.findByIdentityNumber(dto.personalInfoInsertDTO().identityNumber()).isPresent()) {
-                throw new EntityAlreadyExistsException("IdentityNumber", "User with identity number " + dto.personalInfoInsertDTO().identityNumber() + " already exists");
+                throw new EntityAlreadyExistsException("IdentityNumber", "User with this identity number already exists");
             }
 
             Region region = regionRepository.findById(dto.regionId())
@@ -87,13 +86,13 @@ public class TeacherServiceImpl implements ITeacherService {
             role.addUser(user);
 //            teacher.addUser(user); added to mapper TODO
             teacherRepository.save(teacher);        // saved teacher
-            log.info("Teacher with vat={} saved successfully.", dto.vat());
+            log.info("Teacher with uuid={} saved successfully.", teacher.getUuid());
             return mapper.mapToTeacherReadOnlyDTO(teacher);
         } catch (EntityAlreadyExistsException e) {
-            log.error("Save failed for teacher with vat={}. Teacher already exists", dto.vat(), e);     // Structured Logging
+            log.error("Save failed. Teacher already exists", e);
             throw e;
         } catch (EntityInvalidArgumentException e) {
-            log.error("Save failed for teacher with vat={} and region id={} invalid", dto.vat(), dto.regionId());
+            log.error("Save failed. Invalid argument: {}", e.getMessage());
             throw e;
         }
     }
@@ -137,14 +136,14 @@ public class TeacherServiceImpl implements ITeacherService {
 
             if (!teacher.getVat().equals(dto.vat())) {
                 if (teacherRepository.findByVat(dto.vat()).isPresent()) {
-                    throw new EntityAlreadyExistsException("","Teacher with vat=" + dto.vat() + " already exists");
+                    throw new EntityAlreadyExistsException("Teacher","Teacher with this vat already exists");
                 }
                 teacher.setVat(dto.vat());
             }
 
             if (!teacher.getPersonalInfo().getIdentityNumber().equals(dto.personalInfoUpdateDTO().identityNumber()) &&
                     personalInfoRepository.findByIdentityNumber(dto.personalInfoUpdateDTO().identityNumber()).isPresent()) {
-                throw new EntityAlreadyExistsException("Teacher", "Teacher with identity number " + dto.personalInfoUpdateDTO().identityNumber() + " already exists");
+                throw new EntityAlreadyExistsException("Teacher", "Teacher with this identity number already exists");
             }
 
             if (!Objects.equals(dto.regionId(), teacher.getRegion().getId())) {
@@ -166,7 +165,7 @@ public class TeacherServiceImpl implements ITeacherService {
             log.error("Update failed for teacher with uuid={}. Teacher not found", dto.uuid(), e);
             throw e;
         } catch (EntityAlreadyExistsException e) {
-            log.error("Update failed for teacher with uuid={}. Teacher with vat={} already exists", dto.uuid(), dto.vat(), e);
+            log.error("Update failed for teacher with uuid={}. Teacher already exists", dto.uuid(), e);
             throw e;
         } catch (EntityInvalidArgumentException e) {
             log.error("Update failed for teacher with uuid={}. Region id={} invalid", dto.uuid(), dto.regionId(), e);
@@ -193,21 +192,6 @@ public class TeacherServiceImpl implements ITeacherService {
             log.error("Update failed for teacher with uuid={}. Teacher not found", uuid, e);
 
             // Automatic rollback due to @Transactional annotation
-            throw e;
-        }
-    }
-
-    @Override
-    @PreAuthorize("hasRole('ADMIN')")
-    public TeacherReadOnlyDTO getTeacherByUUID(UUID uuid) throws EntityNotFoundException {
-
-        try {
-            Teacher teacher = teacherRepository.findByUuid(uuid)
-                    .orElseThrow(() -> new EntityNotFoundException("Teacher","Teacher with uuid=" + uuid + " not found"));
-            log.debug("Get teacher by uuid={} returned successfully", uuid);
-            return mapper.mapToTeacherReadOnlyDTO(teacher);
-        } catch (EntityNotFoundException e) {
-            log.error("Get teacher by uuid={} failed", uuid, e);
             throw e;
         }
     }
@@ -267,10 +251,10 @@ public class TeacherServiceImpl implements ITeacherService {
             attachment.setFilePath(filePath.toString());
 
             attachment.setContentType(contentType);
-            attachment.setExtension(getFileExtension(savedName));
+            attachment.setExtension(allowedFileType.getExtension());
 
             Teacher teacher = teacherRepository.findByUuid(uuid).orElseThrow(()
-                    -> new EntityNotFoundException("Teacher", "Teacher with uuid=" + uuid + " not found."));
+                    -> new EntityNotFoundException("Teacher", "Teacher with uuid=" + uuid + " not found"));
 
             PersonalInfo personalInfo = teacher.getPersonalInfo();
 
@@ -307,13 +291,13 @@ public class TeacherServiceImpl implements ITeacherService {
 
             if (filters.getVat() != null) {
                 Teacher teacher = teacherRepository.findByVat(filters.getVat())
-                        .orElseThrow(() -> new EntityNotFoundException("Teacher", "vat=" + filters.getVat() + " not found"));
+                        .orElseThrow(() -> new EntityNotFoundException("Teacher", "Teacher with this vat was not found"));
                 return singleResultPage(teacher, pageable);
             }
 
             if (filters.getAmka() != null) {
                 Teacher teacher = teacherRepository.findByPersonalInfo_Amka(filters.getAmka())
-                        .orElseThrow(() -> new EntityNotFoundException("Teacher", "amka=" + filters.getAmka() + " not found"));
+                        .orElseThrow(() -> new EntityNotFoundException("Teacher", "Teacher with this amka was not found"));
                 return singleResultPage(teacher, pageable);
             }
 
@@ -326,13 +310,6 @@ public class TeacherServiceImpl implements ITeacherService {
             log.error("Filtered and paginated teachers were not found", e);
             throw e;
         }
-    }
-
-    private String getFileExtension(String filename) {
-        if (filename != null && filename.contains(".")) {
-            return filename.substring(filename.lastIndexOf("."));
-        }
-        return "";
     }
 
     private Page<TeacherReadOnlyDTO> singleResultPage(Teacher teacher, Pageable pageable) {

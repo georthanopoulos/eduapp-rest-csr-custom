@@ -238,7 +238,6 @@ public class TeacherRestController {
     @GetMapping("/{uuid}")
     public ResponseEntity<TeacherReadOnlyDTO> getTeacherByUUID(@PathVariable UUID uuid)
             throws EntityNotFoundException {
-//        TeacherReadOnlyDTO teacherReadOnlyDTO = teacherService.getTeacherByUUID(uuid);
         TeacherReadOnlyDTO teacherReadOnlyDTO = teacherService.getTeacherByUUIDDeletedFalse(uuid);
         return ResponseEntity.ok(teacherReadOnlyDTO);
     }
