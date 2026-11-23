@@ -22,6 +22,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -229,40 +231,42 @@ public class TeacherServiceImpl implements ITeacherService {
         }
 
         try {
-            String originalFilename = amkaFile.getOriginalFilename();
-
-            Tika tika = new Tika();                                    // Tika: detects the real file type from its content (first bytes), not from the filename or client-sent Content-Type
-            String contentType = tika.detect(amkaFile.getBytes());
-
-            AllowedFileType allowedFileType = AllowedFileType.getByContentType(contentType)
-                            .orElseThrow(() -> new InvalidFileException("TeacherAmka", "The file type is not supported. " +
-                                    "Please upload a valid amka-file in pdf, png or jpg format"));
-
-            String savedName = UUID.randomUUID() + allowedFileType.getExtension();
-
-            Path filePath = Path.of(uploadDir).resolve(savedName);
-
-            Files.createDirectories(filePath.getParent());
-            amkaFile.transferTo(filePath);                    // safe for large files, more efficient
-
-            Attachment attachment = new Attachment();
-            attachment.setFilename(originalFilename);
-            attachment.setSavedName(savedName);
-            attachment.setFilePath(filePath.toString());
-
-            attachment.setContentType(contentType);
-            attachment.setExtension(allowedFileType.getExtension());
 
             Teacher teacher = teacherRepository.findByUuid(uuid).orElseThrow(()
-                    -> new EntityNotFoundException("Teacher", "Teacher with uuid=" + uuid + " not found"));
+                    -> new EntityNotFoundException("Teacher", "Teacher with uuid=" + uuid + " not found"));   // fail-test
 
             PersonalInfo personalInfo = teacher.getPersonalInfo();
 
-            if (personalInfo.getAmkaFile() != null) {
-                Files.deleteIfExists(Path.of(personalInfo.getAmkaFile().getFilePath()));
-                personalInfo.removeAmkaFile();  // orphanRemoval handles DB deletion
-            }
+            String originalFilename = amkaFile.getOriginalFilename();
 
+            Tika tika = new Tika();        // detects the real file type from its content, not from the filename or Content-Type
+            String contentType = tika.detect(amkaFile.getBytes());
+
+            AllowedFileType allowedFileType = AllowedFileType.getByContentType(contentType)
+                    .orElseThrow(() -> new InvalidFileException("TeacherAmka", "The file type is not supported. " +
+                            "Please upload a valid amka-file in pdf, png or jpg format"));
+
+            String savedName = UUID.randomUUID() + allowedFileType.getExtension();
+            Path filePath = Path.of(uploadDir).resolve(savedName);
+
+            Path oldFilePath = personalInfo.getAmkaFile() != null               // Keeping the old file path before replacing it (null if there is none)
+                    ? Path.of(personalInfo.getAmkaFile().getFilePath())
+                    : null;
+
+            Files.createDirectories(filePath.getParent());       // Writes the new file and registers its cleanup immediately
+            amkaFile.transferTo(filePath);                    // safe for large files, more efficient
+            registerFileCleanup(filePath, oldFilePath);
+
+            Attachment attachment = new Attachment();                       // Updating the database
+            attachment.setFilename(originalFilename);
+            attachment.setSavedName(savedName);
+            attachment.setFilePath(filePath.toString());
+            attachment.setContentType(contentType);
+            attachment.setExtension(allowedFileType.getExtension());
+
+            if (personalInfo.getAmkaFile() != null) {
+                personalInfo.removeAmkaFile();                          // orphanRemoval handles DB deletion
+            }
             personalInfo.addAmkaFile(attachment);
             teacherRepository.save(teacher);
             log.info("Attachment for teacher with uuid={} saved", uuid);
@@ -271,10 +275,9 @@ public class TeacherServiceImpl implements ITeacherService {
             throw e;
         } catch (IOException | HttpServerErrorException e) {
             log.error("Error saving attachment for teacher with uuid={}", uuid, e);
-            throw new FileUploadException("TeacherAmka","Error saving attachment for teacher with uuid=" + uuid);
+            throw new FileUploadException("TeacherAmka", "Error saving attachment for teacher with uuid=" + uuid);
         }
     }
-
 
 
     @Override
@@ -318,5 +321,27 @@ public class TeacherServiceImpl implements ITeacherService {
                 pageable,
                 1
         );
+    }
+
+    /**
+     * Runs when the transaction finishes:
+     * - committed  -> the old file is no longer needed, delete it
+     * - rolled back -> the new file is not referenced by the database, delete it
+     */
+    private void registerFileCleanup(Path newFile, Path oldFile) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                Path fileToDelete = (status == STATUS_COMMITTED) ? oldFile : newFile;
+                if (fileToDelete == null) {
+                    return;
+                }
+                try {
+                    Files.deleteIfExists(fileToDelete);
+                } catch (IOException e) {
+                    log.warn("Could not delete file {}", fileToDelete, e);
+                }
+            }
+        });
     }
 }
