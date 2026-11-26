@@ -12,9 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 public interface ITeacherService {
-//    TeacherReadOnlyDTO saveTeacher(TeacherInsertDTO teacherInsertDTO, MultipartFile file)
-//        throws EntityAlreadyExistsException, EntityInvalidArgumentException, IOException, EntityNotFoundException;
-
     TeacherReadOnlyDTO saveTeacher(TeacherInsertDTO teacherInsertDTO)
             throws EntityAlreadyExistsException, EntityInvalidArgumentException;
 
@@ -36,4 +33,8 @@ public interface ITeacherService {
             throws EntityNotFoundException;
 
     boolean isTeacherExists(String vat);
+
+    boolean isAmkaExists(String amka);
+
+    boolean isIdentityNumberExists(String identityNumber);
 }

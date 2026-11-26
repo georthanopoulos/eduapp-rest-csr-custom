@@ -105,6 +105,17 @@ public class TeacherServiceImpl implements ITeacherService {
         return teacherRepository.findByVat(vat).isPresent();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isAmkaExists(String amka) {
+        return personalInfoRepository.findByAmka(amka).isPresent();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isIdentityNumberExists(String identityNumber) {
+        return personalInfoRepository.findByIdentityNumber(identityNumber).isPresent();
+    }
 
     @Override
     @PreAuthorize("hasAuthority('VIEW_TEACHERS')")

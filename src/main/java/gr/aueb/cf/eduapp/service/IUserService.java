@@ -14,7 +14,9 @@ public interface IUserService {
             throws EntityAlreadyExistsException, EntityInvalidArgumentException;
 
     UserReadOnlyDTO getUserByUUID(UUID uuid) throws EntityNotFoundException;
+
     UserReadOnlyDTO getUserByUUIDDeletedFalse(UUID uuid) throws EntityNotFoundException;
+
     boolean isUserExists(String username);
 
     void changePassword(UUID uuid, PasswordUpdateDTO dto)    // plain "void". the public is always meant when we are on Interface-level! (would be redundant if included)! Unlike to a class case scenario when the plain "void" means PACKAGE-PRIVATE, therefore the "public" must be EXPLICITLY stated if needed.
