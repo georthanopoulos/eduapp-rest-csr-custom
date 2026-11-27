@@ -17,4 +17,8 @@ public record UserInsertDTO(
         @NotNull
         Long roleId
 ) {
+    @Override
+    public String toString() {
+        return "UserInsertDTO[username=" + username + ", password=*****, roleId=" + roleId + "]";
+    }
 }

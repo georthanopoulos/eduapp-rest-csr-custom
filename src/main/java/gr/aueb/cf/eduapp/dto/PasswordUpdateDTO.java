@@ -12,4 +12,8 @@ public record PasswordUpdateDTO(
         @Pattern(regexp = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])^.{8,}$")
         String newPassword
 ) {
+    @Override
+    public String toString() {
+        return "PasswordUpdateDTO[oldPassword=*****, newPassword=*****]";
+    }
 }
