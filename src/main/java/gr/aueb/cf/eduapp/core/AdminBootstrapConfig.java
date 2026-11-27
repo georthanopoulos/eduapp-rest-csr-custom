@@ -1,5 +1,6 @@
 package gr.aueb.cf.eduapp.core;
 
+import gr.aueb.cf.eduapp.core.enums.RoleName;
 import gr.aueb.cf.eduapp.model.Role;
 import gr.aueb.cf.eduapp.model.User;
 import gr.aueb.cf.eduapp.repository.RoleRepository;
@@ -19,7 +20,6 @@ import java.util.Base64;
 @Slf4j                                  // creates a log object automatically in the background so that we can write: log.warn(...) without having to create a separate logger.
 public class AdminBootstrapConfig {
 
-    private static final String ADMIN_ROLE_NAME = "ADMIN";
     private static final String ADMIN_USERNAME = "admin";
 
     private final UserRepository userRepository;
@@ -29,16 +29,14 @@ public class AdminBootstrapConfig {
     @Bean
     public CommandLineRunner initAdmin() {   // CLR is a special springBoot interface. Whichever bean implements it, it automatically runs ONCE, right after the boot of the app!
         return args -> {
-            if (userRepository.existsByRole_Name(ADMIN_ROLE_NAME)) {
+            if (userRepository.existsByRole_Name(RoleName.ADMIN.name())) {
                 log.debug("Admin user already exists, skipping bootstrap.");
                 return;
             }
 
-            Role adminRole = roleRepository.findAllByOrderByNameAsc().stream()        // searches which role entity corresponds to the name: "ADMIN".
-                    .filter(r -> r.getName().equals(ADMIN_ROLE_NAME))
-                    .findFirst()
+            Role adminRole = roleRepository.findByName(RoleName.ADMIN.name())
                     .orElseThrow(() -> new IllegalStateException(
-                            "Role 'ADMIN' not found. Check V3__insert_roles_capabilites.sql"));
+                            "Role '%s' not found in database. Check that the Flyway migrations in db/migration have been applied.".formatted(RoleName.ADMIN.name())));
 
             String tempPassword = generateSecurePassword();  // Method that creates a random secure password. See at the bottom of this class.
 
