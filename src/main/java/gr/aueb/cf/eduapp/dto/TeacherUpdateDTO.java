@@ -1,6 +1,7 @@
 package gr.aueb.cf.eduapp.dto;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -20,6 +21,7 @@ public record TeacherUpdateDTO(
         @Size(min = 2)
         String lastname,
 
+        @NotBlank
         @Pattern(regexp = "\\d{9,}")
         String vat,
 
