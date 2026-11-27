@@ -61,7 +61,7 @@ public class TeacherRestController {
     public ResponseEntity<TeacherReadOnlyDTO> saveTeacher(
             @Valid @RequestBody TeacherInsertDTO teacherInsertDTO,
             BindingResult bindingResult)
-                throws EntityAlreadyExistsException, EntityInvalidArgumentException, ValidationException {
+                throws EntityAlreadyExistsException, EntityInvalidArgumentException, ValidationException, ServerConfigurationException {
 
         teacherInsertValidator.validate(teacherInsertDTO, bindingResult);
 
