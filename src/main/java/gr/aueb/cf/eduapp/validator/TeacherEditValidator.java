@@ -37,7 +37,7 @@ public class TeacherEditValidator implements Validator {
             }
         } catch (EntityNotFoundException e) {
             log.warn("Update failed. Teacher with uuid={} not found", teacherUpdateDTO.uuid());
-            errors.rejectValue("uuid", "teacher.uuid.notfound", "Teacher with this uuid not found");
+            errors.rejectValue("uuid", "teacher.uuid.notfound", "Teacher with this uuid was not found");
         }
     }
 }
