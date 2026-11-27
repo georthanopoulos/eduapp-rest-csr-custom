@@ -58,7 +58,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(EntityAlreadyExistsException.class)
     public ResponseEntity<ErrorResponseDTO> handleEntityAlreadyExistsException(EntityAlreadyExistsException e) {
-        log.warn("Entity already exits. Message={}", e.getMessage());
+        log.warn("Entity already exists. Message={}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)                // 409 Conflict
                 .body(new ErrorResponseDTO(e.getCode(), e.getMessage()));
@@ -66,7 +66,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(FileUploadException.class)
     public ResponseEntity<ErrorResponseDTO> handleFileUploadException(FileUploadException e) {
-        log.warn("File upload failed. Message={}", e.getMessage());
+        log.error("File upload failed.", e);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)       // 500 Internal Server Error
                 .body(new ErrorResponseDTO(e.getCode(), e.getMessage()));
@@ -80,9 +80,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponseDTO(e.getCode(), e.getMessage()));
     }
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ExceptionHandler(DataIntegrityViolationException.class)              // Do NOT log e or e.getMessage() here: DB constraint errors often contain the offending value (e.g. Key (vat)=(...)), which would leak personal data (AMKA/VAT) into the logs.
     public ResponseEntity<ErrorResponseDTO> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-        log.warn("Data integrity violation. Message={}", e.getMessage());
+        log.warn("Data integrity violation. Conflict with existing data");
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)                // 409 Conflict
                 .body(new ErrorResponseDTO("DATA_INTEGRITY_VIOLATION", "The request conflicts with existing data."));
@@ -92,17 +92,25 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleDatabaseException(DataAccessException e) {
         log.error("Database error.", e);
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)    // 500 Internal Server Error
                 .body(new ErrorResponseDTO("DATABASE_ERROR", "A database error occurred."));
+    }
+
+    @ExceptionHandler(ServerConfigurationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleServerConfigurationException(ServerConfigurationException e) {
+        log.error("ServerConfiguration error.", e);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)   // 500  Internal Server Error
+                .body(new ErrorResponseDTO("SERVER_CONFIGURATION_ERROR", "A server configuration error occurred."));
     }
 
 
     // Generic fallback
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGenericException(Exception e) {
-        log.warn("Unexpected error. Message={}", e.getMessage());
+        log.error("Unexpected error.", e);
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)        // 500  Internal Server Error
                 .body(new ErrorResponseDTO("INTERNAL_SERVER_ERROR", "A unexpected error occurred."));
     }
 
@@ -130,7 +138,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleAccessDeniedException(AccessDeniedException e) {
         log.warn("Access denied. Message={}", e.getMessage());
         return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)       // 403 Forbidden
+                .status(HttpStatus.FORBIDDEN)              // 403 Forbidden
                 .body(new ErrorResponseDTO("ACCESS_DENIED", e.getMessage()));
     }
 
