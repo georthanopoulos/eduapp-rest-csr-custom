@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public interface ITeacherService {
     TeacherReadOnlyDTO saveTeacher(TeacherInsertDTO teacherInsertDTO)
-            throws EntityAlreadyExistsException, EntityInvalidArgumentException;
+            throws EntityAlreadyExistsException, EntityInvalidArgumentException, ServerConfigurationException;
 
     void saveAmkaFile(UUID uuid, MultipartFile amkaFile)
             throws FileUploadException, EntityNotFoundException, InvalidFileException;

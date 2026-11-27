@@ -1,6 +1,7 @@
 package gr.aueb.cf.eduapp.service;
 
 import gr.aueb.cf.eduapp.core.enums.AllowedFileType;
+import gr.aueb.cf.eduapp.core.enums.RoleName;
 import gr.aueb.cf.eduapp.core.exceptions.*;
 import gr.aueb.cf.eduapp.core.filters.TeacherFilters;
 import gr.aueb.cf.eduapp.dto.TeacherInsertDTO;
@@ -51,9 +52,9 @@ public class TeacherServiceImpl implements ITeacherService {
     private String uploadDir;
 
     @Override
-    @Transactional(rollbackFor = { EntityAlreadyExistsException.class, EntityInvalidArgumentException.class } )
+    @Transactional(rollbackFor = { EntityAlreadyExistsException.class, EntityInvalidArgumentException.class, ServerConfigurationException.class } )
     public TeacherReadOnlyDTO saveTeacher(TeacherInsertDTO dto)
-            throws EntityAlreadyExistsException, EntityInvalidArgumentException {
+            throws EntityAlreadyExistsException, EntityInvalidArgumentException, ServerConfigurationException {
 
         try {
             if (dto.vat() != null && teacherRepository.findByVat(dto.vat()).isPresent()) {
@@ -74,27 +75,27 @@ public class TeacherServiceImpl implements ITeacherService {
             Region region = regionRepository.findById(dto.regionId())
                     .orElseThrow(() -> new EntityInvalidArgumentException("Region", "Region id=" + dto.regionId() + " invalid"));
 
-            final Long teacherRoleId = 3L;    // Πάντα ο ρόλος είναι teacher - TODO να αλλάξει το DTO
-//            Role role = roleRepository.findById(dto.userInsertDTO().roleId())
-//                    .orElseThrow(() -> new EntityInvalidArgumentException("Role","Role id=" + dto.userInsertDTO().roleId() + " invalid"));
-            Role role = roleRepository.findById(teacherRoleId)
-                    .orElseThrow(() -> new EntityInvalidArgumentException("Role","Role id=" + teacherRoleId + " invalid"));
+            Role role = roleRepository.findByName(RoleName.TEACHER.name())      // name() -> returns the actual roleName "TEACHER"
+                    .orElseThrow(() -> new ServerConfigurationException("Role","Role '%s' not found in database. Check that the Flyway migrations in db/migration have been applied.".formatted(RoleName.TEACHER.name())));
 
             Teacher teacher = mapper.mapToTeacherEntity(dto);
-//            User user = mapper.mapToUserEntity(dto.userInsertDTO());
+
             User user = teacher.getUser();
             user.setPassword(passwordEncoder.encode(dto.userInsertDTO().password()));
+
             region.addTeacher(teacher);
+
             role.addUser(user);
-//            teacher.addUser(user); added to mapper TODO
+
             teacherRepository.save(teacher);        // saved teacher
+
             log.info("Teacher with uuid={} saved successfully.", teacher.getUuid());
             return mapper.mapToTeacherReadOnlyDTO(teacher);
         } catch (EntityAlreadyExistsException e) {
-            log.error("Save failed. Teacher already exists", e);
+            log.warn("Save failed. Teacher already exists", e);
             throw e;
         } catch (EntityInvalidArgumentException e) {
-            log.error("Save failed. Invalid argument: {}", e.getMessage());
+            log.warn("Save failed. Invalid argument", e);
             throw e;
         }
     }
