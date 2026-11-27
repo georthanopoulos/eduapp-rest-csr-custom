@@ -31,13 +31,13 @@ public class TeacherEditValidator implements Validator {
 
             if (readOnlyDTO != null && !readOnlyDTO.vat().equals(teacherUpdateDTO.vat())) {
                 if (teacherService.isTeacherExists(teacherUpdateDTO.vat())) {
-                    log.warn("Update failed. Teacher with vat={} already exists", teacherUpdateDTO.vat());
-                    errors.rejectValue("vat", "vat.teacher.exists");
+                    log.warn("Update failed. Teacher with this vat already exists");
+                    errors.rejectValue("vat", "teacher.vat.exists", "Teacher with this vat already exists");
                 }
             }
         } catch (EntityNotFoundException e) {
             log.warn("Update failed. Teacher with uuid={} not found", teacherUpdateDTO.uuid());
-            errors.rejectValue("uuid", "uuid.teacher.notfound");
+            errors.rejectValue("uuid", "teacher.uuid.notfound", "Teacher with this uuid not found");
         }
     }
 }
