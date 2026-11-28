@@ -52,52 +52,44 @@ public class TeacherServiceImpl implements ITeacherService {
     private String uploadDir;
 
     @Override
-    @Transactional(rollbackFor = { EntityAlreadyExistsException.class, EntityInvalidArgumentException.class, ServerConfigurationException.class } )
+    @Transactional(rollbackFor = {EntityAlreadyExistsException.class, EntityInvalidArgumentException.class, ServerConfigurationException.class})
     public TeacherReadOnlyDTO saveTeacher(TeacherInsertDTO dto)
             throws EntityAlreadyExistsException, EntityInvalidArgumentException, ServerConfigurationException {
 
-        try {
-            if (dto.vat() != null && teacherRepository.findByVat(dto.vat()).isPresent()) {
-                throw new EntityAlreadyExistsException("Teacher", "Teacher with this vat already exists");
-            }
-            if (personalInfoRepository.findByAmka(dto.personalInfoInsertDTO().amka()).isPresent()) {
-                throw new EntityAlreadyExistsException("AMKA", "User with this AMKA already exists");
-            }
-
-            if (userRepository.findByUsername(dto.userInsertDTO().username()).isPresent()) {
-                throw new EntityAlreadyExistsException("Username", "User with this username already exists");
-            }
-
-            if (personalInfoRepository.findByIdentityNumber(dto.personalInfoInsertDTO().identityNumber()).isPresent()) {
-                throw new EntityAlreadyExistsException("IdentityNumber", "User with this identity number already exists");
-            }
-
-            Region region = regionRepository.findById(dto.regionId())
-                    .orElseThrow(() -> new EntityInvalidArgumentException("Region", "Region id=" + dto.regionId() + " invalid"));
-
-            Role role = roleRepository.findByName(RoleName.TEACHER.name())      // name() -> returns the actual roleName "TEACHER"
-                    .orElseThrow(() -> new ServerConfigurationException("Role","Role '%s' not found in database. Check that the Flyway migrations in db/migration have been applied.".formatted(RoleName.TEACHER.name())));
-
-            Teacher teacher = mapper.mapToTeacherEntity(dto);
-
-            User user = teacher.getUser();
-            user.setPassword(passwordEncoder.encode(dto.userInsertDTO().password()));
-
-            region.addTeacher(teacher);
-
-            role.addUser(user);
-
-            teacherRepository.save(teacher);        // saved teacher
-
-            log.info("Teacher with uuid={} saved successfully.", teacher.getUuid());
-            return mapper.mapToTeacherReadOnlyDTO(teacher);
-        } catch (EntityAlreadyExistsException e) {
-            log.warn("Save failed. Teacher already exists", e);
-            throw e;
-        } catch (EntityInvalidArgumentException e) {
-            log.warn("Save failed. Invalid argument", e);
-            throw e;
+        if (dto.vat() != null && teacherRepository.findByVat(dto.vat()).isPresent()) {
+            throw new EntityAlreadyExistsException("Teacher", "Teacher with this vat already exists");
         }
+        if (personalInfoRepository.findByAmka(dto.personalInfoInsertDTO().amka()).isPresent()) {
+            throw new EntityAlreadyExistsException("AMKA", "User with this AMKA already exists");
+        }
+
+        if (userRepository.findByUsername(dto.teacherUserInsertDTO().username()).isPresent()) {
+            throw new EntityAlreadyExistsException("Username", "User with this username already exists");
+        }
+
+        if (personalInfoRepository.findByIdentityNumber(dto.personalInfoInsertDTO().identityNumber()).isPresent()) {
+            throw new EntityAlreadyExistsException("IdentityNumber", "User with this identity number already exists");
+        }
+
+        Region region = regionRepository.findById(dto.regionId())
+                .orElseThrow(() -> new EntityInvalidArgumentException("Region", "Region id=" + dto.regionId() + " invalid"));
+
+        Role role = roleRepository.findByName(RoleName.TEACHER.name())      // name() -> returns the actual roleName "TEACHER"
+                .orElseThrow(() -> new ServerConfigurationException("Role", "Role '%s' not found in database. Check that the Flyway migrations in db/migration have been applied.".formatted(RoleName.TEACHER.name())));
+
+        Teacher teacher = mapper.mapToTeacherEntity(dto);
+
+        User user = teacher.getUser();
+        user.setPassword(passwordEncoder.encode(dto.teacherUserInsertDTO().password()));
+
+        region.addTeacher(teacher);
+
+        role.addUser(user);
+
+        teacherRepository.save(teacher);        // saved teacher
+
+        log.info("Teacher with uuid={} saved successfully.", teacher.getUuid());
+        return mapper.mapToTeacherReadOnlyDTO(teacher);
     }
 
     @Override
@@ -138,7 +130,7 @@ public class TeacherServiceImpl implements ITeacherService {
 
     @Override
     @PreAuthorize("hasAuthority('EDIT_TEACHER')")
-    @Transactional(rollbackFor = { EntityNotFoundException.class, EntityAlreadyExistsException.class, EntityInvalidArgumentException.class} )
+    @Transactional(rollbackFor = {EntityNotFoundException.class, EntityAlreadyExistsException.class, EntityInvalidArgumentException.class})
     public TeacherReadOnlyDTO updateTeacher(TeacherUpdateDTO dto)
             throws EntityNotFoundException, EntityAlreadyExistsException, EntityInvalidArgumentException {
         try {
@@ -150,7 +142,7 @@ public class TeacherServiceImpl implements ITeacherService {
 
             if (!teacher.getVat().equals(dto.vat())) {
                 if (teacherRepository.findByVat(dto.vat()).isPresent()) {
-                    throw new EntityAlreadyExistsException("Teacher","Teacher with this vat already exists");
+                    throw new EntityAlreadyExistsException("Teacher", "Teacher with this vat already exists");
                 }
                 teacher.setVat(dto.vat());
             }
@@ -162,7 +154,7 @@ public class TeacherServiceImpl implements ITeacherService {
 
             if (!Objects.equals(dto.regionId(), teacher.getRegion().getId())) {
                 Region region = regionRepository.findById(dto.regionId())
-                        .orElseThrow(() -> new EntityInvalidArgumentException("Region","Region id=" + dto.regionId() + " invalid"));
+                        .orElseThrow(() -> new EntityInvalidArgumentException("Region", "Region id=" + dto.regionId() + " invalid"));
                 Region oldRegion = teacher.getRegion();
                 if (oldRegion != null) {
                     oldRegion.removeTeacher(teacher);
@@ -193,7 +185,7 @@ public class TeacherServiceImpl implements ITeacherService {
     public TeacherReadOnlyDTO deleteTeacherByUUID(UUID uuid) throws EntityNotFoundException {
         try {
             Teacher teacher = teacherRepository.findByUuidAndDeletedFalse(uuid)
-                    .orElseThrow(() -> new EntityNotFoundException("Teacher","Teacher with uuid=" + uuid + " not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Teacher", "Teacher with uuid=" + uuid + " not found"));
 
             teacher.softDelete();
             teacher.getPersonalInfo().softDelete();
@@ -216,7 +208,7 @@ public class TeacherServiceImpl implements ITeacherService {
     public TeacherReadOnlyDTO getTeacherByUUIDDeletedFalse(UUID uuid) throws EntityNotFoundException {
         try {
             Teacher teacher = teacherRepository.findByUuidAndDeletedFalse(uuid)
-                    .orElseThrow(() -> new EntityNotFoundException("Teacher","Teacher with uuid=" + uuid + " not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Teacher", "Teacher with uuid=" + uuid + " not found"));
             log.debug("Get non-deleted teacher by uuid={} returned successfully", uuid);
             return mapper.mapToTeacherReadOnlyDTO(teacher);
         } catch (EntityNotFoundException e) {
@@ -227,7 +219,7 @@ public class TeacherServiceImpl implements ITeacherService {
 
     @Override
     @Retryable(
-            includes = { IOException.class, HttpServerErrorException.class },
+            includes = {IOException.class, HttpServerErrorException.class},
             maxRetries = 2,
             delay = 2000,
             multiplier = 2,

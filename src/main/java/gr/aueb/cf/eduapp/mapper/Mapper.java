@@ -28,7 +28,7 @@ public class Mapper {
         teacher.setLastname(dto.lastname());
         teacher.setVat(dto.vat());
 
-        UserInsertDTO userDTO = dto.userInsertDTO();
+        TeacherUserInsertDTO userDTO = dto.teacherUserInsertDTO();
         User user = new User();
         user.setUsername(userDTO.username());
         user.setPassword(userDTO.password());

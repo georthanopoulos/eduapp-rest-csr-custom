@@ -25,7 +25,7 @@ public record TeacherInsertDTO(
 
         @Valid
         @NotNull
-        UserInsertDTO userInsertDTO,
+        TeacherUserInsertDTO teacherUserInsertDTO,
 
         @Valid
         @NotNull

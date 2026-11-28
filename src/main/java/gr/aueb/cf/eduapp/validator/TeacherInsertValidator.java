@@ -43,10 +43,10 @@ public class TeacherInsertValidator implements Validator {
             errors.rejectValue("personalInfoInsertDTO.identityNumber", "teacher.identityNumber.exists", "Teacher with this identity number already exists");
         }
 
-        if (teacherInsertDTO.userInsertDTO() != null && teacherInsertDTO.userInsertDTO().username() != null &&
-                userService.isUserExists(teacherInsertDTO.userInsertDTO().username())) {
+        if (teacherInsertDTO.teacherUserInsertDTO() != null && teacherInsertDTO.teacherUserInsertDTO().username() != null &&
+                userService.isUserExists(teacherInsertDTO.teacherUserInsertDTO().username())) {
             log.warn("Save failed. Teacher with this username already exists");
-            errors.rejectValue("userInsertDTO.username", "teacher.username.exists", "Teacher with this username already exists");
+            errors.rejectValue("teacherUserInsertDTO.username", "teacher.username.exists", "Teacher with this username already exists");
         }
     }
 }

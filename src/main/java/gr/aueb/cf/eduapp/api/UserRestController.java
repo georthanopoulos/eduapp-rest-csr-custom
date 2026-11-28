@@ -74,7 +74,7 @@ public class UserRestController {
                                                         BindingResult bindingResult)
             throws ValidationException, EntityAlreadyExistsException, EntityInvalidArgumentException {
 
-//        userInsertValidator.validate(userInsertDTO, bindingResult);
+//        userInsertValidator.validate(teacherUserInsertDTO, bindingResult);
         if (bindingResult.hasErrors()) {
             throw new ValidationException("User", "Invalid user data", bindingResult);
         }
